@@ -1,0 +1,5 @@
+-Umawianie meczy
+-Statystyki
+-Transfery
+-profile
+-uprawnienia
