@@ -1,0 +1,189 @@
+﻿@page "/mecz/{matchIdQuery}"
+@using Microsoft.Data.SqlClient
+@using Microsoft.EntityFrameworkCore
+@using ULO.UI.Models
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+
+@if (matchIdQuery is null)
+{
+    <h1>Nieprawidłowy link</h1>
+}
+else
+{
+    <div class="container">
+    @if(historyMatches is not null)
+    {
+        <div class="row d-flex justify-content-between align-content-center" style="border-bottom: 1px solid #000">
+
+            <div class="col-md-4 d-flex flex-column align-items-center">
+                <div>
+                    @if (historyMatches.HostTeamLogo != null && historyMatches.HostTeamLogo.Length > 0)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(historyMatches.HostTeamLogo)}")" alt="Logo" class="rounded-circle img-fluid" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                    }
+                </div>
+                <div>
+                    <h3>@historyMatches.HostTeamName</h3>
+                </div>
+            </div>
+
+            <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+                <h1 class="align-items-center" style="font-weight: bold;">VS</h1>
+                @if (@historyMatches.Score1Value is null || @historyMatches.Score1Value is null)
+                {
+                    <h3>Wynik nie uzupełniony</h3>
+                }
+                else
+                {
+                    <h1 style="font-weight: bold;">@historyMatches.Score1Value : @historyMatches.Score2Value</h1>
+                }
+            </div>
+
+
+            <div class="col-md-4 d-flex flex-column align-items-center">
+                <div>
+                    @if (historyMatches.GuestTeamLogo != null && historyMatches.GuestTeamLogo.Length > 0)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(historyMatches.GuestTeamLogo)}")" alt="Logo" class="rounded-circle img-fluid" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                    }
+                </div>
+                <div>
+                    <h3>@historyMatches.GuestTeamName</h3>
+                </div>
+            </div>
+ 
+        </div>
+
+        <div class="row d-flex justify-content-between align-content-center">
+
+            @if(goals is not null)
+            {
+                <div class="col-md-4 d-flex flex-column align-items-center">
+                    @foreach (var item in goals)
+                    {
+                        if (item.TeamId == hostTeam.Id)
+                        {
+                            <div>@item.FirstName @item.LastName  Strzelone bramki: @item.Goals</div>
+                        }
+                    }
+                </div>
+
+                <div class="col-md-4 d-flex flex-column align-items-center">
+                    @foreach (var item in goals)
+                    {
+                        if (item.TeamId == guestTeam.Id)
+                        {
+                            <div>@item.FirstName @item.LastName Strzelone bramki: @item.Goals</div>
+                        }
+                    }
+                </div>
+            }
+            else
+            {
+                <h2 style="text-align:center; border-bottom:1px solid #000; font-weight:bold; margin: 25px 0 25px 0;">Brak uzupełnionych goli</h2>
+            }
+
+        </div>
+
+        <div class="row d-flex justify-content-between align-content-center">
+
+            <div class="col-md-4 d-flex flex-column align-items-center">
+                @foreach (var item in hostTeamPlayers)
+                {
+                    <div>
+                        <h2>@item.FirstName @item.LastName</h2>
+                    </div>
+                }
+            </div>
+            
+            <div class="col-md-4 d-flex flex-column align-items-center">
+                @foreach (var item in guestTeamPlayers)
+                {
+                    <div>
+                        <h2>@item.FirstName @item.LastName</h2>
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+    
+</div>
+}
+
+
+
+@code {
+    [Parameter]
+    public string matchIdQuery { get; set; }
+
+    public int matchIdQueryInt { get; set; }
+
+    public HistoryMatchDashboard? historyMatches { get; set; }
+
+    public List<GoalsMatch>? goals { get; set; }
+
+    public Team? hostTeam { get; set; }
+    public Team? guestTeam { get; set; }
+    public List<TeamPoz>? hostTeamPlayers { get; set; }
+    public List<TeamPoz>? guestTeamPlayers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetMatches();
+        if (historyMatches is not null)
+        {
+            await GetTeams();
+            await GetGoals();
+        }
+    }
+
+    public async Task GetMatches()
+    {
+        if (matchIdQuery is not null)
+        {
+            matchIdQueryInt = int.Parse(matchIdQuery);
+
+            try
+            {
+                historyMatches = await _dbcontext.Database.SqlQueryRaw<HistoryMatchDashboard>(
+                    "SELECT m.Id as 'Id', t.TeamName as 'HostTeamName', t.Logo as 'HostTeamLogo', " +
+                    "tt.TeamName as 'GuestTeamName', tt.Logo as 'GuestTeamLogo', " +
+                    "m.MatchDate as 'MatchDate', p.Score1Value, p.Score2Value " +
+                    "From match m " +
+                    "join team t on m.GuestTeamId = t.Id " +
+                    "join team tt on m.HostTeamId = tt.Id " +
+                    "left join matchpoz p on p.matchid = m.id " +
+                    "where m.id =  @matchIdQueryInt",
+                    new SqlParameter("@matchIdQueryInt", matchIdQueryInt)
+                ).FirstOrDefaultAsync();
+            }
+            catch (Exception ex) { }
+        }
+        else return;
+    }
+
+    public async Task GetGoals()
+    {
+        try
+        {
+            goals = await _dbcontext.GoalsMatch.Where(g => g.MatchId == historyMatches.Id).ToListAsync();
+        }
+        catch(Exception ex) { }
+    }
+
+    public async Task GetTeams()
+    {
+        try
+        {
+            hostTeam = await _dbcontext.Team.FirstOrDefaultAsync(t => t.TeamName == historyMatches.HostTeamName);
+            guestTeam = await _dbcontext.Team.FirstOrDefaultAsync(t => t.TeamName == historyMatches.GuestTeamName);
+
+            hostTeamPlayers = await _dbcontext.TeamPoz.Where(t => t.TeamId == hostTeam.Id).ToListAsync();
+            guestTeamPlayers = await _dbcontext.TeamPoz.Where(t => t.TeamId == guestTeam.Id).ToListAsync();
+        }
+        catch (Exception ex) { }
+    }
+
+}
