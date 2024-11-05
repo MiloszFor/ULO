@@ -1,0 +1,13 @@
+-Historia meczy szczegoly
+-Statystyki meczy uzupelnianie
+-aktualnosci
+-*PRZEROBIENIE WIDOKU ZARZADZANIA DRUZYN¥ (OPCJE ZAWODNIKA)
+-kapitan
+-Statystyki
+-Transfery
+-druzyna publicznie
+-*profile
+-uprawnienia
+-powiadomienia dla prezesów
+-tabela strzelców
+-punktacja
