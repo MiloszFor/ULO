@@ -1,0 +1,70 @@
+﻿@page "/wniosek"
+@inject ULODbContext _dbcontext
+@inject NavigationManager _navigationManager
+@using ULO.UI.Models.Entities
+
+<link rel="stylesheet" href="css/style.css">
+
+<h3>Add New Team</h3>
+
+<div class="container">
+    <EditForm Model="@newTeam" OnValidSubmit="SubmitTeam">
+        <DataAnnotationsValidator />
+
+        <div>
+            <label>Team Name:</label>
+            <InputText @bind-Value="newTeam.TeamName" placeholder="Enter team name" />
+            <ValidationMessage For="() => newTeam.TeamName" />
+        </div>
+
+        <div>
+            <label>Logo:</label>
+            <InputFile OnChange="OnFileChange" />
+            <ValidationMessage For="() => newTeam.Logo" />
+        </div>
+
+        <div>
+            <label>Address:</label>
+            <InputText @bind-Value="newTeam.Address" placeholder="Enter team address" />
+            <ValidationMessage For="() => newTeam.Address" />
+        </div>
+
+        <button type="submit">Add Team</button>
+    </EditForm>
+
+    <span class="text-success">@successMessage</span>
+    <span class="text-danger">@errorMessage</span>
+</div>
+
+@code {
+    private Team newTeam = new Team();
+    private string? successMessage;
+    private string? errorMessage;
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            newTeam.Logo = buffer;
+        }
+    }
+
+    private async Task SubmitTeam()
+    {
+        try
+        {
+            await _dbcontext.Team.AddAsync(newTeam);
+            await _dbcontext.SaveChangesAsync();
+            successMessage = "Team added successfully!";
+            newTeam = new Team(); // Resetowanie formularza
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while adding the team. Please try again.";
+            Console.WriteLine(ex.Message); // Dla debugowania
+        }
+    }
+}
