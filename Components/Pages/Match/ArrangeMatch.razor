@@ -1,0 +1,330 @@
+﻿@page "/umow-mecz"
+@inject ULODbContext _dbcontext
+@using System.Security.Claims
+@using Microsoft.Data.SqlClient
+@using ULO.Models.Entities
+@using ULO.UI.Models.Entities
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+
+<style>
+    .container {
+        background-color: #fff;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+        width: 100%; /* 100% szerokości */
+        max-width: 1200px; /* Maksymalna szerokość */
+        min-height: 400px;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Zapewnia równą wysokość kart */
+        height: 100%; /* Pełna wysokość karty */
+    }
+
+    input, select {
+        background-color: #eee;
+        border: none;
+        margin: 8px 0;
+        padding: 10px 15px;
+        font-size: 13px;
+        border-radius: 8px;
+        width: 100%;
+        outline: none;
+    }
+
+    button {
+        background-color: #512da8;
+        color: #fff;
+        font-size: 12px;
+        padding: 10px 45px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+</style>
+@if (isLoading)
+    {
+        <p>Loading...</p>
+    }
+    else if (team != null)
+    {
+        <div class="container">
+            <h2 class="mt-4 mb-4 text-center">Umów Mecz</h2>
+            <h2 class="text-success text-center">@successMessage</h2>
+
+    
+                <div class="row">
+                    <!-- Pierwsza kolumna z drużyną -->
+                    <div class="col-12 col-md-6 mb-4 d-flex justify-content-center">
+                        <div class="card p-3 shadow-sm text-center w-100 d-flex flex-column align-items-center justify-content-center">
+                            @if (team.Logo != null && team.Logo.Length > 0)
+                            {
+                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(team.Logo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                            }
+
+                            <h5 class="card-title">@team.TeamName</h5>
+                        </div>
+                    </div>
+
+                    <!-- Druga kolumna z przeciwnikiem -->
+                    <div class="col-12 col-md-6 mb-4 d-flex justify-content-center">
+                        <div class="card p-3 shadow-sm text-center w-100 d-flex flex-column align-items-center justify-content-center">
+                            @if (oponentLogo != null && oponentLogo.Length > 0)
+                            {
+                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(oponentLogo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                            }
+                            else
+                            {
+                                <img src="https://via.placeholder.com/100" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                            }
+
+                            <select @onchange="UpdateOponentLogo">
+                                <option value="">Wybierz drużyne</option>
+                                @foreach (var oponent in oponentsTeam)
+                                {
+                                    <option value="@oponent.TeamName">@oponent.TeamName</option>
+                                }
+                            </select>
+                            <InputText @bind-Value="oponentTeam.Place" placeholder="Miejsce meczu"></InputText>
+                            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="oponentTeam.DateMatch"></InputDate>
+                            <button class="btn btn-primary btn-sm" @onclick="SubmitMatch">Wyślij zaproszenie na mecz</button>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <div class="row">
+            <h1 class="mt-4 mb-4 text-center">Przyszłe mecze jako gospodarz</h1>
+            <div class="mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        @if (futureMatchOwner is not null)
+                        {
+                            @foreach (var item in futureMatchOwner)
+                            {
+                                <div class="row align-items-center">
+                                    <div class="col-md-2 text-center">
+                                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.Logo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                                    </div>
+
+                                    <div class="col-md-8 d-flex align-items-center justify-content-around">
+                                    <h5 class="card-title mb-0 me-3">@item.TeamName</h5>
+                                    <p class="card-text mb-0 me-3"><strong>Adres:</strong> @item.Address</p>
+                                    <p class="card-text mb-0"><strong>Data:</strong> @item.DateMatch</p>
+                                    </div>
+
+                                    <div class="col-md-2 text-end">
+                                    <button class="btn btn-success btn-sm mb-2 w-100" @onclick="async () => await UpdateMatchStatus(item.MatchId, 'O')">Odwołaj</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div class="row">
+        <h1 class="mt-4 mb-4 text-center">Przyszłe mecze jako Goście</h1>
+        <div class="mb-3">
+            <div class="card">
+                <div class="card-body">
+                    @if (futureMatchOwner is not null)
+                    {
+                        @foreach (var item in futureMatchGuest)
+                        {
+                            <div class="row align-items-center">
+                                <div class="col-md-2 text-center">
+                                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.Logo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                                </div>
+
+                                <div class="col-md-8 d-flex align-items-center justify-content-around">
+                                    <h5 class="card-title mb-0 me-3">@item.TeamName</h5>
+                                    <p class="card-text mb-0 me-3"><strong>Adres:</strong> @item.Address</p>
+                                    <p class="card-text mb-0"><strong>Data:</strong> @item.DateMatch</p>
+                                </div>
+
+                                <div class="col-md-2 text-end">
+                                    @if(item.Status == 'N')
+                                    {
+                                        <button class="btn btn-success btn-sm mb-2 w-100" @onclick="async () => await UpdateMatchStatus(item.MatchId, 'A')">Akceptuj</button>
+                                    }
+                                    <button class="btn btn-success btn-sm mb-2 w-100" @onclick="async () => await UpdateMatchStatus(item.MatchId, 'O')">Odrzuć</button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Team not found or user is not associated with a team.</p>
+}
+
+
+
+
+
+
+
+@code {
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    public byte[] oponentLogo;
+
+    public Team? team { get; set; }
+
+    public List<Team>? oponentsTeam { get; set; }
+
+    public Oponent oponentTeam { get; set; } = new();
+
+    public List<FuturesMatch>? futureMatchOwner { get; set; }
+    public List<FuturesMatch>? futureMatchGuest { get; set; }
+
+    public class FuturesMatch
+    {
+        public int MatchId { get; set; }
+        public byte[]? Logo { get; set; }
+        public string? TeamName { get; set; }
+        public string? Address { get; set; }
+        public DateTime? DateMatch { get; set; }
+        public char? Status { get; set; }
+    }
+
+    public class Oponent
+    {
+        public string? TeamName { get; set; }
+        public string? Place { get; set; }
+        public DateTime? DateMatch { get; set; }
+    }
+
+    public User? user { get; set; }
+
+    private bool isLoading = true;
+
+    public string? successMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateTask;
+        var userLogin = authenticationState?.User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (userLogin == null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Login == userLogin);
+
+        if (user != null)
+        {
+            team = await _dbcontext.Team.FirstOrDefaultAsync(t => t.OwnerId == user.Id);
+        }
+        isLoading = false;
+
+        oponentsTeam = _dbcontext.Team.Where(t => t.Id != team.Id).ToList();
+
+        await GetFuturesMatch(team.Id);
+
+    }
+
+    private void UpdateOponentLogo(ChangeEventArgs e)
+    {
+        if (e.Value.ToString() == "")
+        {
+            oponentLogo = null;
+            StateHasChanged();
+            return;
+        }
+        var selectedTeamName = e.Value.ToString();
+
+        if (!string.IsNullOrEmpty(selectedTeamName))
+        {
+            var selectedOponent = oponentsTeam?.FirstOrDefault(t => t.TeamName == selectedTeamName);
+
+            if (selectedOponent != null)
+            {
+                oponentLogo = selectedOponent.Logo;
+                oponentTeam.TeamName = selectedOponent.TeamName;
+            }
+        }
+        StateHasChanged();
+    }
+
+    public async Task SubmitMatch()
+    {
+        if (oponentTeam.TeamName == "" || oponentTeam.TeamName is null)
+        {
+            successMessage = "Nie wybrano drużyny";
+            return;
+        }
+        if (oponentTeam.DateMatch < DateTime.Now)
+        {
+            successMessage = "Wybrano błędną date";
+            return;
+        }
+        Team gusetTeam = await _dbcontext.Team.FirstOrDefaultAsync(t => t.TeamName == oponentTeam.TeamName);
+
+        Match match = new Match
+        {
+            HostTeamId = team.Id,
+            GuestTeamId = gusetTeam.Id,
+            Place = oponentTeam.Place,
+            MatchDate = oponentTeam.DateMatch,
+            Status = 'N'
+        };
+
+        successMessage = "Umówiono mecz, zaczekaj na akceptacje przeciwnika";
+
+        await _dbcontext.Match.AddAsync(match);
+        await _dbcontext.SaveChangesAsync();
+
+        await GetFuturesMatch(team.Id);
+        StateHasChanged();
+    }
+
+    public async Task GetFuturesMatch(int teamId)
+    {
+        futureMatchOwner = _dbcontext.Database.SqlQueryRaw<FuturesMatch>(
+            "SELECT m.id as 'MatchId', t.Logo, t.TeamName, m.Place as 'Address', m.MatchDate as 'DateMatch', m.status as 'Status'" +
+            "FROM team t " +
+            "JOIN match m ON t.Id = m.guestTeamId " +
+            "WHERE m.hostTeamId = @teamId and m.MatchDate > getdate() and m.Status != 'O'",
+            new SqlParameter("@teamId", teamId)
+            ).ToList();
+
+        futureMatchGuest = _dbcontext.Database.SqlQueryRaw<FuturesMatch>(
+            "SELECT m.id as 'MatchId', t.Logo, t.TeamName, m.Place as 'Address', m.MatchDate as 'DateMatch', m.status as 'Status'" +
+            "FROM team t " +
+            "JOIN match m ON t.Id = m.hostTeamId " +
+            "WHERE m.guestTeamId = @teamId and m.MatchDate > getdate() and m.Status != 'O'",
+            new SqlParameter("@teamId", teamId)
+            ).ToList();
+    }
+
+    public async Task UpdateMatchStatus(int matchId, char matchStatus)
+    {
+        var match = await _dbcontext.Match.FirstOrDefaultAsync(m => m.Id == matchId);
+
+        match.Status = matchStatus;
+
+        await _dbcontext.SaveChangesAsync();
+        await GetFuturesMatch(team.Id);
+        StateHasChanged();
+    }
+
+}
+
+
