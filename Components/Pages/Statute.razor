@@ -1,0 +1,53 @@
+﻿@page "/regulamin"
+@using Microsoft.EntityFrameworkCore
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+
+<style>
+    .container {
+        background-color: #fff;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        max-width: 1200px;
+        min-height: 400px;
+        padding: 20px;
+    }
+</style>
+
+<div class="container">
+    <h1 class="text-center" style="font-weight: bold;">Regulamin</h1>
+    @if (statute == null)
+    {
+        <p>Brak regulaminu</p>
+    }
+    else
+    {
+        <p>@((MarkupString)statute.Rules)</p>
+    }
+</div>
+<button style="margin-top: 1vh;" class="btn btn-success btn-lg active">
+    <a style="text-decoration: none; color: white;" href="/admin/regulamin">Edytuj regulamin</a>
+</button>
+
+@code {
+    public ULO.UI.Models.Entities.Statute? statute { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            statute = await _dbcontext.Statute
+                .OrderByDescending(s => s.Id)
+                .FirstOrDefaultAsync();
+        }
+        catch (Exception ex) { }
+
+        if (statute.Rules is not null)
+        {
+            statute.Rules = statute.Rules.Replace("\n", "<br />");
+        }
+    }
+}

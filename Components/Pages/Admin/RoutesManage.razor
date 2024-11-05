@@ -1,0 +1,73 @@
+﻿@page "/admin/regulamin"
+@inject ULODbContext _dbcontext
+@using Microsoft.EntityFrameworkCore
+@using ULO.UI.Models.Entities
+@using ULO.Models.Entities
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+
+<div class="container">
+    @if (statute != null)
+    {
+        <div class="row">
+            <InputTextArea id="dynamic-textarea" style="min-height: 150px; height: 80vh;" @bind-Value="statute.Rules" />
+        </div>
+        <div class="row justify-content-center">
+            <button style="margin-top: 5px; max-width: 15%" class="btn btn-success btn-sm mb-2 w-100" @onclick="async () => await UpdateStatute()">
+                Aktualizuj
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="row mt-2">
+                <span class="text-success">@successMessage</span>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="text-danger">Nie znaleziono regulaminu w bazie danych.</p>
+    }
+</div>
+
+@code {
+    private Statute? statute { get; set; }
+    private string tempStatute;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            statute = await _dbcontext.Statute.OrderByDescending(s => s.Id).FirstOrDefaultAsync();
+            tempStatute = statute.Rules;
+
+            if (statute == null)
+            {
+                statute = new Statute { Rules = string.Empty };
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    private async Task UpdateStatute()
+    {
+        if (statute.Rules == "" || statute.Rules is null) return;
+
+        try
+        {
+            Statute newStatute = new Statute { Rules = statute.Rules };
+            statute.Rules = tempStatute;
+            await _dbcontext.Statute.AddAsync(newStatute);
+            await _dbcontext.SaveChangesAsync();
+            successMessage = "Zaktualizowano regulamin";
+
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        }
+        catch (Exception e) { }
+
+    }
+}
