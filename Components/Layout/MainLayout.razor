@@ -1,0 +1,51 @@
+﻿@using System.Security.Claims
+@using ULO.Models.Entities
+@inherits LayoutComponentBase
+@inject ULODbContext _dbcontext
+
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <AuthorizeView>
+            <Authorized>
+                <div class="top-row px-4">
+                    @if (user is not null)
+                    {
+                        <a href="#"><h3>Id#@user.Id @user.FirstName @user.LastName</h3></a>
+                    }
+                    <a class="btn btn-danger btn-lg active" href="logout">Wyloguj</a>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="top-row px-4">
+                    <a class="btn btn-success btn-lg active" href="login">Zaloguj</a>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+    public User? user { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateTask;
+        var userLogin = authenticationState.User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (userLogin is not null)
+        {
+            user = _dbcontext.Users.FirstOrDefault(u => u.Login == userLogin);
+        }
+    }
+}
