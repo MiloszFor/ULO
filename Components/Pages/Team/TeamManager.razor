@@ -1,0 +1,175 @@
+﻿@page "/druzyna"
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using ULO.Models.Entities
+@using ULO.UI.Models
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+
+<style>
+    .container-TeamManagerForm {
+        background-color: #fff;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+        width: 768px;
+        max-width: 100%;
+        min-height: 580px;
+    }
+    .container form {
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 0 40px;
+        height: 100%;
+    }
+
+    .container input {
+        background-color: #eee;
+        border: none;
+        margin: 8px 0;
+        padding: 10px 15px;
+        font-size: 13px;
+        border-radius: 8px;
+        width: 100%;
+        outline: none;
+    }
+
+    .container button {
+        background-color: #512da8;
+        color: #fff;
+        font-size: 12px;
+        padding: 10px 45px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="container">
+    <h2 class="mt-4 mb-4">Dodaj zawodnika do drużyny</h2>
+    <div class="container-TeamManagerForm container">
+        <div class="card" style="border: none">
+            <div class="card-body">
+                <EditForm Model="@teamPozAdd" OnValidSubmit="TeamPlayerAdd" FormName="AddTeamPlayer">
+                    <DataAnnotationsValidator />
+                    <h1>Dodaj zawodnika</h1>
+
+                    <InputText @bind-Value="teamPozAdd.FirstName" placeholder="FirstName" />
+                    <ValidationMessage For="() =>teamPozAdd.FirstName" />
+
+                    <InputText @bind-Value="teamPozAdd.LastName" placeholder="LastName" />
+                    <ValidationMessage For="() =>teamPozAdd.LastName" />
+
+                    <InputText @bind-Value="teamPozAdd.Position" placeholder="Position" />
+                    <ValidationMessage For="() =>teamPozAdd.Position" />
+
+
+                    <button>Dodaj zawodnika</button>
+
+                    <span class="text-success">@successMessage</span>
+
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mt-5">Lista zawodników w drużynie</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Imię</th>
+                    <th>Nazwisko</th>
+                    <th>Pozycja</th>
+                </tr>
+            </thead>
+            @if (teamPoz != null && teamPoz.Count > 0)
+            {
+                @foreach(var player in teamPoz)
+                {
+                    <tbody>
+                        <tr>
+                            <td>@player.FirstName</td>
+                            <td>@player.LastName</td>
+                            <td>@player.Position</td>
+                        </tr>
+                    </tbody>
+                }
+            }
+            else
+            {
+                <tbody>
+                    <tr>
+                        <td colspan="3" style="text-align: center">Brak zawodników</td>
+                    </tr>
+                </tbody>
+            }
+        </table>
+    </div>
+</div>
+
+
+
+@code {
+    public List<TeamPoz> teamPoz { get; set; } = new();
+    public Team? teamNag { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    [SupplyParameterFromForm(FormName = "AddTeamPlayer")]
+    public AddTeamPozDto teamPozAdd { get; set; } = new();
+    private string? successMessage;
+
+    public User? user { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateTask;
+        var userLogin = authenticationState.User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (userLogin is not null)
+        {
+            user = _dbcontext.Users.FirstOrDefault(u => u.Login == userLogin);
+        }
+
+        await LoadTeamsAsync(user.Id);
+    }
+
+    private async Task LoadTeamsAsync(int userId)
+    {
+        teamNag = await _dbcontext.Team.FirstOrDefaultAsync(t => t.OwnerId == userId && t.Status == 'A');
+        teamPoz = await _dbcontext.TeamPoz.Where(t => t.TeamId == teamNag.Id).ToListAsync();
+    }
+
+    private async Task TeamPlayerAdd()
+    {
+        TeamPoz playerAdd = new TeamPoz
+        {
+            FirstName = teamPozAdd.FirstName,
+            LastName = teamPozAdd.LastName,
+            TeamId = teamNag.Id,
+            Position = teamPozAdd.Position,
+            Status = 'A'
+        };
+        try
+        {
+            await _dbcontext.TeamPoz.AddAsync(playerAdd);
+            await _dbcontext.SaveChangesAsync();
+            await LoadTeamsAsync(user.Id);
+        }
+        catch (Exception ex)
+        {
+            successMessage = $"Error: {ex.Message}";
+        }
+
+    }
+}

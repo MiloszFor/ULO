@@ -1,0 +1,114 @@
+﻿@page "/wniosek"
+@using Microsoft.AspNetCore.Mvc
+@using System.Security.Claims
+@using ULO.UI.Models
+@using ULO.UI.Models.Entities
+@attribute [IgnoreAntiforgeryToken]
+@inject ULODbContext _dbcontext
+@inject NavigationManager _navigationManager
+@rendermode InteractiveServer
+
+<link rel="stylesheet" href="css/style.css">
+
+<h3>Add New Team</h3>
+
+<div class="container">
+    <EditForm Model="@newTeam" OnValidSubmit="SubmitTeam" FormName="AddTeamForm">
+        <DataAnnotationsValidator />
+        <h1>Stwórz drużyne</h1>
+        <span>Wypełnij wszystkie dane oraz poczekaj na akceptacje</span>
+
+        <InputText @bind-Value="newTeam.TeamName" placeholder="TeamName" />
+        <ValidationMessage For="() =>newTeam.TeamName" />
+
+        <InputText @bind-Value="newTeam.InstaUrl" placeholder="InstaUrl" />
+        <ValidationMessage For="() =>newTeam.InstaUrl" />
+
+        <InputText @bind-Value="newTeam.Address" placeholder="Address" />
+        <ValidationMessage For="() =>newTeam.Address" />
+
+        <label>Logo:</label>
+        <InputFile OnChange="OnFileChange" />
+        <ValidationMessage For="() => newTeam.Logo" />
+
+        <InputCheckbox @bind-Value="newTeam.AcceptTerms" />
+        <label>Zaakceptuj regulamin</label>
+        <ValidationMessage For="@(() => newTeam.AcceptTerms)" />
+
+        <button>Dodaj drużynę</button>
+
+        <span class="text-success">@successMessage</span>
+
+    </EditForm>
+
+    <span class="text-success">@successMessage</span>
+</div>
+
+@code {
+    [SupplyParameterFromForm(FormName = "AddTeamForm")]
+    public RegisterTeam newTeam { get; set; } = new RegisterTeam();
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private string? successMessage;
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            newTeam.Logo = buffer;  // Set the logo in newTeam
+        }
+    }
+
+    private async Task SubmitTeam()
+    {
+        if (newTeam.TeamName is null) return;
+
+        bool checkUser = CheckTeam(newTeam.TeamName);
+        if (checkUser is true)
+        {
+            successMessage = "Nazwa drużyny jest zajęta";
+            return;
+        }
+
+        var authenticationState = await AuthenticationStateTask;
+        var userLogin = authenticationState.User.FindFirst(ClaimTypes.Name)?.Value;
+
+        var user = _dbcontext.Users.FirstOrDefault(u => u.Login == userLogin);
+
+        if (user is null) return;
+
+        Team team = new Team
+            {
+                TeamName = newTeam.TeamName,
+                InstaUrl = newTeam.InstaUrl,
+                Address = newTeam.Address,
+                OwnerId = user.Id,
+                Status = 'N',
+                Logo = newTeam.Logo,
+                Created = DateTime.Now,
+                LastUpdated = DateTime.Now
+            };
+
+        try
+        {
+            await _dbcontext.Team.AddAsync(team);
+            await _dbcontext.SaveChangesAsync();
+            successMessage = "Team added successfully!";
+        }
+        catch (Exception ex)
+        {
+            successMessage = $"Error: {ex.Message}";
+        }
+    }
+    private bool CheckTeam(string teamName)
+    {
+        var result = _dbcontext.Team.Where(x => x.TeamName == teamName).FirstOrDefault();
+        if (result is null) return false;
+        return true;
+    }
+}

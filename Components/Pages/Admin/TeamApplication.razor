@@ -1,0 +1,73 @@
+﻿@page "/admin/wnioski"
+@inject ULODbContext _dbcontext
+@using Microsoft.EntityFrameworkCore
+@using ULO.UI.Models
+@using ULO.UI.Models.Entities
+@rendermode InteractiveServer
+
+<h3>Lista Drużyn do Akceptacji</h3>
+
+@if (teams == null)
+{
+    <p>Ładowanie danych...</p>
+}
+else if (!teams.Any())
+{
+    <p>Brak drużyn do zatwierdzenia.</p>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            @foreach (var team in teams)
+            {
+                <div class="mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                @if (team.Logo != null && team.Logo.Length > 0)
+                                {
+                                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(team.Logo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-right: 15px;" />
+                                }
+                            </div>
+                            <h5 class="card-title">@team.TeamName</h5>
+                            <p class="card-text">@team.Address</p>
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-success btn-sm me-2" @onclick="() => UpdateStatus(team.Id, 'A')">Akceptuj</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => UpdateStatus(team.Id, 'O')">Odrzuć</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<Team>? teams;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTeamsAsync();
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        teams = await _dbcontext.Team.Where(t => t.Status == 'N').ToListAsync();
+    }
+
+    private async Task UpdateStatus(int teamId, char status)
+    {
+        Team? team = await _dbcontext.Team.FirstOrDefaultAsync(t => t.Id == teamId);
+
+        if (team is not null)
+        {
+            team.Status = status;
+            team.LastUpdated = DateTime.Now;
+            await _dbcontext.SaveChangesAsync();
+            await LoadTeamsAsync(); // Odśwież listę drużyn po aktualizacji statusu
+            StateHasChanged(); // Wymusi aktualizację widoku
+        }
+    }
+}
