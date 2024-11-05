@@ -1,0 +1,145 @@
+﻿@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Authentication
+@using ULO.Models.Entities
+@using ULO.UI.Models
+@inject IJSRuntime JS
+@inject ULODbContext _dbcontext
+@inject NavigationManager _navigationManager
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+
+<div class="container" id="container">
+    <div class="form-container sign-up">
+        <EditForm Model="@RegisterUser" OnValidSubmit="Register" FormName="RegisterForm">
+            <DataAnnotationsValidator />
+            <h1>Create Account</h1>
+            <span>or use your email for registration</span>
+
+            <InputText @bind-Value="RegisterUser.Login" placeholder="Login" />
+            <ValidationMessage For="() =>RegisterUser.Login" />
+
+            <InputText @bind-Value="RegisterUser.Email" placeholder="Email" />
+            <ValidationMessage For="() =>RegisterUser.Email" />
+
+            <InputText @bind-Value="RegisterUser.FirstName" placeholder="Imie" />
+            <ValidationMessage For="() =>RegisterUser.FirstName" />
+
+            <InputText @bind-Value="RegisterUser.LastName" placeholder="Nazwisko" />
+            <ValidationMessage For="() =>RegisterUser.LastName" />
+
+            <InputText @bind-Value="RegisterUser.Password" placeholder="Haslo" />
+            <ValidationMessage For="() =>RegisterUser.Password" />
+
+            <InputText @bind-Value="RegisterUser.ConfirmPassword" placeholder="Powtorz haslo" />
+            <ValidationMessage For="() =>RegisterUser.ConfirmPassword" />
+            <button>Sign Up</button>
+        </EditForm>
+    </div>
+    <div class="form-container sign-in">
+        <span class="text-danger">@errorLoginMessage</span>
+        <EditForm Model="@LoginUser" OnValidSubmit="Login" FormName="LoginForm">
+            <DataAnnotationsValidator />
+            <h1>Sign In</h1>
+            <span>or use your email password</span>
+            <InputText @bind-Value="LoginUser.Login" placeholder="Login" />
+            <ValidationMessage For="() =>LoginUser.Login" />
+            <InputText @bind-Value="LoginUser.Password" placeholder="Password" type="password" />
+            <ValidationMessage For="() =>LoginUser.Password" />
+            <a href="#">Forget Your Password?</a>
+            <button>Sign In</button>
+        </EditForm>
+    </div>
+    <div class="toggle-container">
+        <div class="toggle">
+            <div class="toggle-panel toggle-left">
+                <h1>Welcome Back!</h1>
+                <p>Enter your personal details to use all of site features</p>
+                <button class="hidden" id="login">Sign In</button>
+            </div>
+            <div class="toggle-panel toggle-right">
+                <h1>Hello, Friend!</h1>
+                <p>Register with your personal details to use all of site features</p>
+                <button class="hidden" id="register">Sign Up</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/script.js"></script>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm(FormName = "LoginForm")]
+    public LoginUserDto LoginUser { get; set; } = new();
+
+    [SupplyParameterFromForm(FormName = "RegisterForm")]
+    public RegisterUserDto RegisterUser { get; set; } = new();
+
+    private string? errorLoginMessage;
+    private string? errorRegisterMessage;
+
+    private async Task Login()
+    {
+        var userAccount = _dbcontext.Users.Where(x => x.Login == LoginUser.Login).FirstOrDefault();
+        if (userAccount is null || userAccount.Password != LoginUser.Password)
+        {
+            errorLoginMessage = "Invalid User Name or Passowrd";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, LoginUser.Login),
+            new Claim(ClaimTypes.Role, userAccount.Rank)
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+        _navigationManager.NavigateTo("/", true);
+    }
+    public async Task Register()
+    {
+        bool checkUser = CheckUser(RegisterUser.Login);
+        if (checkUser is true)
+        {
+            errorRegisterMessage = "Login jest zajęty";
+            return;
+        }
+
+        User user = new User
+        {
+            Login = RegisterUser.Login,
+            Email = RegisterUser.Email,
+            FirstName = RegisterUser.FirstName,
+            LastName = RegisterUser.LastName,
+            Password = RegisterUser.Password,
+            Rank = "User"
+        };
+
+        await _dbcontext.Users.AddAsync(user);
+        await _dbcontext.SaveChangesAsync();
+
+        _navigationManager.NavigateTo("/login", true);
+
+    }
+    private bool CheckUser(string login)
+    {
+        var result = _dbcontext.Users.Where(x => x.Login == login).FirstOrDefault();
+        if (result is null) return false;
+        return true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("eval", "script.js");
+        }
+    }
+}
