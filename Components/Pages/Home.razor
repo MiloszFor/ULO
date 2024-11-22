@@ -72,6 +72,28 @@
         </div>
     </div>
 </main>
+<div class="container">
+    <div class="row">
+        <h5 class="alert-info" style="text-align:center; margin-top: 50px;">Chcesz pomóc w rozwoju projektu lub zostać ambasadorem?</h5>
+        <h5 class="alert-info" style="text-align:center;">Udostępnij link do swojego profilu na Instagramie</h5>
+        <h5 class="alert-info" style="text-align:center;">Link znajduje się po przejściu w widok drużyny z listy drużyn</h5>
+    </div>
+    <h5 class="alert-danger" style="text-align:center; margin-top: 50px;">Strona jest w fazie rozwoju i występuje w wersji wczesnego dostępu!</h5>
+    <div class="row">
+        <h3 style="text-align:center;">Ambasadorzy</h3>
+        @if (ambasadorList is not null)
+        {
+            @foreach(var item in ambasadorList)
+            {
+                <div class="row d-flex justify-content-center align-items-center flex-column">
+                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.Logo)}")" alt="Logo" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                    <h3 style="text-align:center;">@item.TeamName</h3>
+                </div>
+            }
+        }
+        
+    </div>
+</div>
 
 <style>
     .carousel-control-prev-icon,
@@ -103,9 +125,12 @@
 @code {
     public List<FutureMatchDashboard>? MatchDashboard { get; set; }
 
+    public List<ULO.UI.Models.Entities.Team> ambasadorList { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await GetMatch();
+        ambasadorList = _dbcontext.Team.Where(t => t.Id == 51).ToList();
     }
 
     public async Task GetMatch()

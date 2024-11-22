@@ -1,10 +1,13 @@
 ﻿@page "/admin/wnioski"
 @inject ULODbContext _dbcontext
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ULO.Models.Entities
 @using ULO.UI.Models
 @using ULO.UI.Models.Entities
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin")]
+
 
 <h3 style="text-align: center">Lista Drużyn do Akceptacji</h3>
 

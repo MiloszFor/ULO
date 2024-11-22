@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ULO;
 
@@ -11,9 +12,11 @@ using ULO;
 namespace ULO.UI.Migrations
 {
     [DbContext(typeof(ULODbContext))]
-    partial class ULODbContextModelSnapshot : ModelSnapshot
+    [Migration("20241122183530_Init14")]
+    partial class Init14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,25 +118,6 @@ namespace ULO.UI.Migrations
                     b.ToTable("GoalsMatch");
                 });
 
-            modelBuilder.Entity("ULO.UI.Models.Entities.LogLogin", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LogLogin");
-                });
-
             modelBuilder.Entity("ULO.UI.Models.Entities.Match", b =>
                 {
                     b.Property<int>("Id")
@@ -173,34 +157,15 @@ namespace ULO.UI.Migrations
                     b.Property<int>("MatchId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Score1Value")
+                    b.Property<int>("Score1Value")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Score2Value")
+                    b.Property<int>("Score2Value")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.ToTable("matchPoz");
-                });
-
-            modelBuilder.Entity("ULO.UI.Models.Entities.Reports", b =>
-                {
-                    b.Property<int?>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
-
-                    b.Property<string>("ReportText")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("ULO.UI.Models.Entities.Statute", b =>
@@ -264,9 +229,6 @@ namespace ULO.UI.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Avatar")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
