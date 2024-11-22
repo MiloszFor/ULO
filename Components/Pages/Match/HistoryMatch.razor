@@ -1,5 +1,8 @@
 ﻿@page "/historia-meczy"
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@using ULO.Models.Entities
+@using ULO.UI.Models.Entities
 @using ULO.UI.Models
 @inject ULODbContext _dbcontext
 @rendermode InteractiveServer
@@ -47,6 +50,10 @@
 							{
 								<h1 style="font-weight: bold;">@item.Score1Value : @item.Score2Value</h1>
 							}
+							@if (ownerTeamNameList.Contains(item.HostTeamName) || ownerTeamNameList.Contains(item.GuestTeamName))
+							{
+                                <button><a href="/wynik-meczu/@item.Id">Wstaw wynik meczu</a></button>
+							}
 
 						</div>
 						<div>
@@ -73,20 +80,49 @@
     }
 </div>
 @code{
-    public List<HistoryMatchDashboard>? historyMatches { get; set; }
+	public List<HistoryMatchDashboard>? historyMatches { get; set; }
+	[CascadingParameter]
 
-    protected override async Task OnInitializedAsync()
-    {
-        await GetMatches();
-    }
+	public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+	public List<Team>? ownerTeam { get; set; }
+
+	public User? user { get; set; }
+
+	public List<string>? ownerTeamNameList { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		await GetMatches();
+		await CheckMatchScoreBtn();
+	}
+
+	public async Task CheckMatchScoreBtn()
+	{
+
+		var authenticationState = await AuthenticationStateTask;
+		var userLogin = authenticationState?.User.FindFirst(ClaimTypes.Name)?.Value;
+
+		if (userLogin != null)
+		{
+			user = _dbcontext.Users.FirstOrDefault(u => u.Login == userLogin);
+		}
+
+		List<string> teamNameList = historyMatches.Select(match => match.GuestTeamName).Distinct().ToList();
+
+		ownerTeam = await _dbcontext.Team.Where(t => teamNameList.Contains(t.TeamName) && t.OwnerId == user.Id).ToListAsync();
+
+		ownerTeamNameList = ownerTeam.Select(n => n.TeamName).Distinct().ToList();
+
+	}
 
     public async Task GetMatches()
     {
         try
         {
             historyMatches = await _dbcontext.Database.SqlQueryRaw<HistoryMatchDashboard>(
-                "SELECT m.Id as 'Id', t.TeamName as 'HostTeamName', t.Logo as 'HostTeamLogo', " +
-                "tt.TeamName as 'GuestTeamName', tt.Logo as 'GuestTeamLogo', " +
+				"SELECT m.Id as 'Id', t.TeamName as 'GuestTeamName', t.Logo as 'GuestTeamLogo', " +
+				"tt.TeamName as 'HostTeamName', tt.Logo as 'HostTeamLogo', " +
                 "m.MatchDate as 'MatchDate', p.Score1Value, p.Score2Value " +
                 "From match m " +
                 "join team t on m.GuestTeamId = t.Id " +

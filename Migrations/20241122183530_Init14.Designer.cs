@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ULO;
 
@@ -11,9 +12,11 @@ using ULO;
 namespace ULO.UI.Migrations
 {
     [DbContext(typeof(ULODbContext))]
-    partial class ULODbContextModelSnapshot : ModelSnapshot
+    [Migration("20241122183530_Init14")]
+    partial class Init14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -154,10 +157,10 @@ namespace ULO.UI.Migrations
                     b.Property<int>("MatchId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Score1Value")
+                    b.Property<int>("Score1Value")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Score2Value")
+                    b.Property<int>("Score2Value")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

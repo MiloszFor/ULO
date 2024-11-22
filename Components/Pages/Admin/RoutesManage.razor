@@ -1,11 +1,12 @@
 ﻿@page "/admin/regulamin"
 @inject ULODbContext _dbcontext
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ULO.UI.Models.Entities
 @using ULO.Models.Entities
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
-
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="container">
     @if (statute != null)

@@ -1,11 +1,14 @@
 ﻿@page "/druzyna-zarzadzaj"
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ULO.Models.Entities
 @using ULO.UI.Models
 @using ULO.UI.Models.Entities
 @inject ULODbContext _dbcontext
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Prezes")]
+
 
 <style>
     .container-TeamManagerForm {

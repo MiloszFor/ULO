@@ -10,34 +10,10 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/script.js" defer></script>
+
 
 <div class="container" id="container">
-    <div class="form-container sign-up">
-        <EditForm Model="@RegisterUser" OnValidSubmit="Register" FormName="RegisterForm">
-            <DataAnnotationsValidator />
-            <h1>Stwórz konto</h1>
-            <InputText @bind-Value="RegisterUser.Login" placeholder="Login" />
-            <ValidationMessage For="() =>RegisterUser.Login" />
-
-            <InputText @bind-Value="RegisterUser.Email" placeholder="Email" />
-            <ValidationMessage For="() =>RegisterUser.Email" />
-
-            <InputText @bind-Value="RegisterUser.FirstName" placeholder="Imie" />
-            <ValidationMessage For="() =>RegisterUser.FirstName" />
-
-            <InputText @bind-Value="RegisterUser.LastName" placeholder="Nazwisko" />
-            <ValidationMessage For="() =>RegisterUser.LastName" />
-
-            <InputText @bind-Value="RegisterUser.Password" placeholder="Haslo" />
-            <ValidationMessage For="() =>RegisterUser.Password" />
-
-            <InputText @bind-Value="RegisterUser.ConfirmPassword" placeholder="Powtorz haslo" />
-            <ValidationMessage For="() =>RegisterUser.ConfirmPassword" />
-            <button>Zarejestruj!</button>
-        </EditForm>
-        <span class="text-success">@errorRegisterMessage</span>
-    </div>
-    <div class="form-container sign-in">
         <span class="text-danger">@errorLoginMessage</span>
         <EditForm Model="@LoginUser" OnValidSubmit="Login" FormName="LoginForm">
             <DataAnnotationsValidator />
@@ -46,27 +22,10 @@
             <ValidationMessage For="() =>LoginUser.Login" />
             <InputText @bind-Value="LoginUser.Password" placeholder="Password" type="password" />
             <ValidationMessage For="() =>LoginUser.Password" />
-            <a href="#">Zapomniałeś hasła?</a>
             <button>Zaloguj!</button>
+            <button><a style="color:#fff;" href="/register">Nie masz jeszcze konta? Zarejestruj się!</a></button>
         </EditForm>
-    </div>
-    <div class="toggle-container">
-        <div class="toggle">
-            <div class="toggle-panel toggle-left">
-                <h1>Witaj!</h1>
-                <p>Zaloguj się aby korzystać z wszystkich dostępnych opcji witryny</p>
-                <button class="hidden" id="login">Zaloguj!</button>
-            </div>
-            <div class="toggle-panel toggle-right">
-                <h1>Witaj!</h1>
-                <p>Zarejestruj się aby korzystać z wszystkich dostępnych opcji witryny</p>
-                <button class="hidden" id="register">Zarejestruj!</button>
-            </div>
-        </div>
-    </div>
 </div>
-
-<script src="js/script.js"></script>
 
 @code {
     [CascadingParameter]
