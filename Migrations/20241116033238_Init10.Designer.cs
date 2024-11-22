@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ULO;
 
@@ -11,9 +12,11 @@ using ULO;
 namespace ULO.UI.Migrations
 {
     [DbContext(typeof(ULODbContext))]
-    partial class ULODbContextModelSnapshot : ModelSnapshot
+    [Migration("20241116033238_Init10")]
+    partial class Init10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -110,44 +113,6 @@ namespace ULO.UI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Match");
-                });
-
-            modelBuilder.Entity("ULO.UI.Models.Entities.MatchPoz", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("MatchId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Score1Value")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Score2Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("matchPoz");
-                });
-
-            modelBuilder.Entity("ULO.UI.Models.Entities.Statute", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Rules")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Statute");
                 });
 
             modelBuilder.Entity("ULO.UI.Models.Entities.Team", b =>

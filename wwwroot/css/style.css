@@ -7,6 +7,7 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+/* Globalne style kontenera dla formularza logowania i rejestracji */
 .container {
     background-color: #fff;
     border-radius: 30px;
@@ -15,7 +16,7 @@
     overflow: hidden;
     width: 768px;
     max-width: 100%;
-    min-height: 480px;
+    min-height: 580px;
 }
 
     .container p {
@@ -183,4 +184,66 @@
 
 .container.active .toggle-right {
     transform: translateX(200%);
+}
+
+/* Style dla formularza dodawania drużyny */
+.team-form-container {
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    max-width: 90%;
+    width: 768px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+    .team-form-container h3 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .team-form-container form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .team-form-container label {
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    .team-form-container input[type="text"],
+    .team-form-container input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        font-size: 13px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+
+    .team-form-container button {
+        background-color: #512da8;
+        color: #fff;
+        font-size: 14px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+        .team-form-container button:hover {
+            background-color: #5c6bc0;
+        }
+
+@media (max-width: 768px) {
+    .team-form-container {
+        width: 90%;
+        padding: 15px;
+    }
 }
