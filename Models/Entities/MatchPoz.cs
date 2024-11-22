@@ -7,8 +7,8 @@ namespace ULO.UI.Models.Entities
         [Key]
         public int Id { get; set; }
         public int MatchId { get; set; }
-        public int Score1Value { get; set; }
-        public int Score2Value { get; set; }
+        public int? Score1Value { get; set; }
+        public int? Score2Value { get; set; }
 
     }
 }

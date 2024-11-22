@@ -60,21 +60,23 @@ else
             @if(goals is not null)
             {
                 <div class="col-md-4 d-flex flex-column align-items-center">
+                    <h3 style="font-weight:bold">Strzelone gole:</h3>
                     @foreach (var item in goals)
                     {
                         if (item.TeamId == hostTeam.Id)
                         {
-                            <div>@item.FirstName @item.LastName  Strzelone bramki: @item.Goals</div>
+                            <div><h5>@item.FirstName @item.LastName Strzelone bramki: @item.Goals</h5></div>
                         }
                     }
                 </div>
 
                 <div class="col-md-4 d-flex flex-column align-items-center">
+                    <h3 style="font-weight:bold">Strzelone gole:</h3>
                     @foreach (var item in goals)
                     {
                         if (item.TeamId == guestTeam.Id)
                         {
-                            <div>@item.FirstName @item.LastName Strzelone bramki: @item.Goals</div>
+                            <div><h5>@item.FirstName @item.LastName : @item.Goals</h5></div>
                         }
                     }
                 </div>
@@ -89,6 +91,7 @@ else
         <div class="row d-flex justify-content-between align-content-center">
 
             <div class="col-md-4 d-flex flex-column align-items-center">
+                <h3 style="font-weight:bold">Drużyna nr. 1</h3>
                 @foreach (var item in hostTeamPlayers)
                 {
                     <div>
@@ -98,6 +101,7 @@ else
             </div>
             
             <div class="col-md-4 d-flex flex-column align-items-center">
+                <h3 style="font-weight:bold">Drużyna nr. 2</h3>
                 @foreach (var item in guestTeamPlayers)
                 {
                     <div>
