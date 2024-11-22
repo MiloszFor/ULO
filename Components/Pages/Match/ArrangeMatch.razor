@@ -1,11 +1,14 @@
 ﻿@page "/umow-mecz"
 @inject ULODbContext _dbcontext
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.Data.SqlClient
 @using ULO.Models.Entities
 @using ULO.UI.Models.Entities
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Prezes")]
+
 
 <style>
     .container {

@@ -14,34 +14,52 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="wniosek">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Załóż drużyne
-            </NavLink>
-        </div>
+        <AuthorizeView Roles="User">
+            <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="wniosek">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Załóż drużyne
+                    </NavLink>
+            </div>
+        </AuthorizeView>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="regulamin">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Regulamin
             </NavLink>
         </div>
+
+        <AuthorizeView Roles="Admin">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/admin/wnioski">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> /admin/wnioski
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Prezes">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/druzyna-zarzadzaj">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Zarządzaj drużyną
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Prezes">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/umow-mecz">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> umow-mecz
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/admin/wnioski">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> /admin/wnioski
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/druzyna-zarzadzaj">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Zarządzaj drużyną
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/umow-mecz">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> umow-mecz
-            </NavLink>
-        </div><div class="nav-item px-3">
             <NavLink class="nav-link" href="/historia-meczy">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Historia Meczy
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/druzyny">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Druzyny
             </NavLink>
         </div>
     </nav>
