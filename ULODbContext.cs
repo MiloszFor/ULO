@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ULO.Models.Entities;
+using ULO.UI.Components.Pages;
 using ULO.UI.Models.Entities;
 
 namespace ULO
@@ -11,9 +12,10 @@ namespace ULO
         public DbSet<TeamPoz> TeamPoz {  get; set; }
         public DbSet<Team> Team { get; set; }
         public DbSet<Match> Match { get; set; }
-        public DbSet<Statute> Statute { get; set; }
+        public DbSet<ULO.UI.Models.Entities.Statute> Statute { get; set; }
         public DbSet<MatchPoz> matchPoz { get; set; }
         public DbSet<GoalsMatch> GoalsMatch { get; set; }
+        public DbSet<Reports> Reports { get; set; }
 
         public ULODbContext(DbContextOptions<ULODbContext> options) : base(options)
         {

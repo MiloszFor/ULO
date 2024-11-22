@@ -1,16 +1,14 @@
-﻿@page "/login"
+﻿@page "/register"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.AspNetCore.Authentication
 @using ULO.Models.Entities
 @using ULO.UI.Models
-@inject IJSRuntime JS
 @inject ULODbContext _dbcontext
 @inject NavigationManager _navigationManager
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/script.js" defer></script>
 
 <style>
     .cookie-banner {
@@ -29,22 +27,38 @@
 
 
 <div class="container" id="container">
-        <span class="text-danger">@errorLoginMessage</span>
-        <EditForm Model="@LoginUser" OnValidSubmit="Login" FormName="LoginForm">
+        <EditForm Model="@RegisterUser" OnValidSubmit="Register" FormName="RegisterForm">
             <DataAnnotationsValidator />
-            <h1>Zaloguj!</h1>
-            <InputText @bind-Value="LoginUser.Login" placeholder="Login" />
-            <ValidationMessage For="() =>LoginUser.Login" />
-            <InputText @bind-Value="LoginUser.Password" placeholder="Password" type="password" />
-            <ValidationMessage For="() =>LoginUser.Password" />
-            <button>Zaloguj!</button>
+            <h1>Stwórz konto</h1>
+            <InputText @bind-Value="RegisterUser.Login" placeholder="Login" />
+            <ValidationMessage For="() =>RegisterUser.Login" />
+
+            <InputText @bind-Value="RegisterUser.Email" placeholder="Email" />
+            <ValidationMessage For="() =>RegisterUser.Email" />
+
+            <InputText @bind-Value="RegisterUser.FirstName" placeholder="Imie" />
+            <ValidationMessage For="() =>RegisterUser.FirstName" />
+
+            <InputText @bind-Value="RegisterUser.LastName" placeholder="Nazwisko" />
+            <ValidationMessage For="() =>RegisterUser.LastName" />
+
+            <InputText @bind-Value="RegisterUser.Password" placeholder="Haslo" />
+            <ValidationMessage For="() =>RegisterUser.Password" />
+
+            <InputText @bind-Value="RegisterUser.ConfirmPassword" placeholder="Powtorz haslo" />
+            <ValidationMessage For="() =>RegisterUser.ConfirmPassword" />
+            <button>Zarejestruj!</button>
         </EditForm>
-    <button style="width:100%;"><a style="color:#fff;" href="/register">Nie masz jeszcze konta? Zarejestruj się!</a></button>
+        <span class="text-success">@errorRegisterMessage</span>
+    <button style="width:100%;"><a style="color:#fff;" href="/login">Masz już konto? Zaloguj się!</a></button>
+
+        
 </div>
+
 <div class="cookie-banner">
     <p>
         Ta strona używa ciasteczek oraz zapisuje dane w bazie danych w celu poprawy jakości usług.
-        Kontynuując korzystanie z serwisu, akceptujesz te zasady. Kliknij przycisk, aby zaakceptować.
+        Kontynuując korzystanie z serwisu, akceptujesz te zasady. Kliknij "Zaloguj" lub "Zarejestruj", aby zaakceptować.
     </p>
 </div>
 
@@ -52,37 +66,12 @@
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
 
-    [SupplyParameterFromForm(FormName = "LoginForm")]
-    public LoginUserDto LoginUser { get; set; } = new();
-
     [SupplyParameterFromForm(FormName = "RegisterForm")]
     public RegisterUserDto RegisterUser { get; set; } = new();
 
     private string? errorLoginMessage;
     private string? errorRegisterMessage;
 
-    private async Task Login()
-    {
-        if (LoginUser.Login is null) return;
-
-        var userAccount = _dbcontext.Users.Where(x => x.Login == LoginUser.Login).FirstOrDefault();
-        if (userAccount is null || userAccount.Password != LoginUser.Password)
-        {
-            errorLoginMessage = "Invalid User Name or Passowrd";
-            return;
-        }
-
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, LoginUser.Login),
-            new Claim(ClaimTypes.Role, userAccount.Rank)
-        };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var principal = new ClaimsPrincipal(identity);
-        await HttpContext.SignInAsync(principal);
-        _navigationManager.NavigateTo("/");
-    }
     public async Task Register()
     {
         bool checkUser = CheckUser(RegisterUser.Login);
@@ -114,13 +103,5 @@
         var result = _dbcontext.Users.Where(x => x.Login == login).FirstOrDefault();
         if (result is null) return false;
         return true;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("eval", "script.js");
-        }
     }
 }

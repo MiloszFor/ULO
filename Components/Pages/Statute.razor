@@ -28,10 +28,11 @@
         <p>@((MarkupString)statute.Rules)</p>
     }
 </div>
-<button style="margin-top: 1vh;" class="btn btn-success btn-lg active">
-    <a style="text-decoration: none; color: white;" href="/admin/regulamin">Edytuj regulamin</a>
-</button>
-
+<AuthorizeView Roles="Admin">
+    <button style="margin-top: 1vh;" class="btn btn-success btn-lg active">
+        <a style="text-decoration: none; color: white;" href="/admin/regulamin">Edytuj regulamin</a>
+    </button>
+</AuthorizeView>
 @code {
     public ULO.UI.Models.Entities.Statute? statute { get; set; }
 

@@ -1,0 +1,59 @@
+﻿@page "/druzyna/{TeamIdQuery}"
+@using Microsoft.EntityFrameworkCore
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+
+<div class="container">
+    @if(team is not null)
+    {
+        <div class="row d-flex justify-content-center align-items-center flex-column">
+            <img src="@($"data:image/png;base64,{Convert.ToBase64String(team.Logo)}")" alt="Logo" class="rounded-circle" style="width: 250px; height: 250px; margin-bottom: 15px;" />
+            <h3 style="text-align:center;">@team.TeamName</h3>
+        </div>
+
+        @if (teamPoz is not null)
+        {
+            foreach (var item in teamPoz)
+            {
+                <div id="test" class="row text-center" style="margin: 10px 0 10px 0; border-bottom: solid 1px #000">
+
+                    <div class="row align-items-center">
+                        <div class="col-md-8 d-flex align-items-center justify-content-around">
+                            <img src="https://via.placeholder.com/100" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+                            <h5 class="card-title mb-0 me-3"><b>Numer:</b> @item.Number <b>Imie i Nazwisko:</b> @item.FirstName @item.LastName</h5>
+                        </div>
+                    </div>
+
+                </div>
+            }
+        }
+    }
+    
+</div>
+
+@code{
+    [Parameter]
+    public string TeamIdQuery { get; set; }
+
+    public int TeamIdQueryInt { get; set; }
+
+    public Team? team { get; set; }
+    public List<TeamPoz>? teamPoz { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TeamIdQuery is not null)
+        {
+            TeamIdQueryInt = int.Parse(TeamIdQuery);
+            GetTeamDetails();
+        }
+
+    }
+
+    public void GetTeamDetails()
+    {
+        team = _dbcontext.Team.FirstOrDefault(t => t.Id == TeamIdQueryInt);
+        teamPoz = _dbcontext.TeamPoz.Where(t => t.TeamId == TeamIdQueryInt).ToList();
+    }
+
+}

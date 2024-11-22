@@ -1,13 +1,20 @@
--Statystyki meczy uzupelnianie
 -aktualnosci
 -*PRZEROBIENIE WIDOKU ZARZADZANIA DRUZYN¥ (OPCJE ZAWODNIKA)
--kapitan
 -Statystyki
 -Transfery
--druzyna publicznie
 -*profile
--uprawnienia
--powiadomienia dla prezesów
 -tabela strzelców
--punktacja
 -szyfrowanie hase³
+-komunikat o przerwie technicznej
+-powiadomienia dla prezesów
+
+
+-------------------------------------
+Zmiany po wystawieniu wersji na PROD
+-------------------------------------
+-wyszukiwanie meczy/druzyn
+-zarz¹dzanie kontami - admin
+-kapitan
+-strony histori meczy oraz druzyn
+
+ 

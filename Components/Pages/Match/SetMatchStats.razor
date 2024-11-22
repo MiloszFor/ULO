@@ -1,0 +1,303 @@
+﻿@page "/wynik-meczu/{matchIdQuery}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@using ULO.Models.Entities
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Prezes")]
+
+<style>
+    #selectPlayer {
+        background-color: #fff;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+        width: 100%; /* 100% szerokości */
+        max-width: 1200px; /* Maksymalna szerokość */
+        min-height: 300px;
+    }
+
+    input, select {
+        background-color: #eee;
+        border: none;
+        margin: 8px 0;
+        padding: 10px 15px;
+        font-size: 13px;
+        border-radius: 8px;
+        width: 100%;
+        outline: none;
+    }
+
+    button {
+        background-color: #512da8;
+        color: #fff;
+        font-size: 12px;
+        padding: 10px 45px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+</style>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (user is null || (hostTeam.OwnerId != user.Id && guestTeam.OwnerId != user.Id))
+{
+    <h1>Nie jesteś prezesem drużyn które grały w tym meczu!</h1>
+}
+else
+{
+    <div class="container">
+        <h1 style="text-align:center;">Wypełnianie wyniku meczu</h1>
+        <div class="row d-flex justify-content-center align-items-center">
+            <div id="selectPlayer" class="text-center" style="margin-bottom:20px;">
+                <h5 style="padding-top: 20px;">Wybierz zawodnika</h5>
+                <select @onchange="UpdatePlayer">
+                    <option value=""></option>
+                    @if (hostTeam.OwnerId == user.Id)
+                    {
+                        @foreach (var item in hostTeamPlayers)
+                        {
+                            <option value="@item.Id">@item.FirstName @item.LastName</option>
+                        }
+                    }
+                    @if (guestTeam.OwnerId == user.Id)
+                    {
+                        @foreach (var item in guestTeamPlayers)
+                        {
+                            <option value="@item.Id">@item.FirstName @item.LastName</option>
+                        }
+                    }
+                </select>
+                <InputNumber @bind-Value="goalsCount" placeholder="Ilość goli"></InputNumber>
+                <button @onclick="async () => await SetGoals()">Dodaj gola/e</button>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Imię</th>
+                        <th>Nazwisko</th>
+                        <th>Ilość goli</th>
+                        <th style="width: 35%;">Opcje</th>
+                    </tr>
+                </thead>
+                @if (goals != null && goals.Count > 0)
+                {
+                    @foreach (var item in goals)
+                    {
+                        <tbody>
+                            <tr>
+                                <td>@item.FirstName</td>
+                                <td>@item.LastName</td>
+                                <td>@item.Goals</td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm mb-2 w-100" @onclick="async () => await DeleteGoals(item)">Usuń</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    }
+                }
+                else
+                {
+                    <tbody>
+                        <tr>
+                            <td colspan="4" style="text-align: center">Brak danych</td>
+                        </tr>
+                    </tbody>
+                }
+            </table>
+        </div>
+
+        <div class="row">
+            <button class="btn btn-success btn-sm mb-2 w-100" @onclick="async () => await AcceptScore()">Zatwierdź wynik</button>
+            <h1 style="text-align:center;">@successMessage</h1>
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string matchIdQuery { get; set; }
+
+    public int matchIdQueryInt { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    public User? user { get; set; }
+
+    public Match? match { get; set; }
+
+    public Team? hostTeam { get; set; }
+    public Team? guestTeam { get; set; }
+    public List<TeamPoz>? hostTeamPlayers { get; set; }
+    public List<TeamPoz>? guestTeamPlayers { get; set; }
+
+    public List<GoalsMatch>? goalsAdd { get; set; } = new();
+    public List<GoalsMatch>? goals { get; set; }
+
+    public int? goalsCount { get; set; }
+
+    private bool isLoading = true;
+
+    public int selectedUserId { get; set; }
+    public TeamPoz? selectedUser { get; set; }
+
+    public MatchPoz? matchPoz { get; set; }
+
+    public MatchPoz? score { get; set; }
+
+    public string? successMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        matchIdQueryInt = int.Parse(matchIdQuery);
+
+        var authenticationState = await AuthenticationStateTask;
+        var userLogin = authenticationState?.User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (userLogin != null)
+        {
+            user = _dbcontext.Users.FirstOrDefault(u => u.Login == userLogin);
+            match = _dbcontext.Match.FirstOrDefault(m => m.Id == matchIdQueryInt);
+            await GetTeams();
+            await GetGoals();
+        }
+        isLoading = false;
+    }
+
+    public async Task GetTeams()
+    {
+        hostTeam = _dbcontext.Team.FirstOrDefault(t => t.Id == match.HostTeamId);
+        guestTeam = _dbcontext.Team.FirstOrDefault(t => t.Id == match.GuestTeamId);
+
+        hostTeamPlayers = _dbcontext.TeamPoz.Where(t => t.TeamId == hostTeam.Id).ToList();
+        guestTeamPlayers = _dbcontext.TeamPoz.Where(t => t.TeamId == guestTeam.Id).ToList();
+    }
+
+    public async Task UpdatePlayer(ChangeEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Value?.ToString()))
+        {
+            return;
+        }
+        selectedUserId = int.Parse(e.Value.ToString());
+    }
+
+    public async Task SetGoals()
+    {
+        if (selectedUserId == 0)
+        {
+            return;
+        }
+
+        selectedUser = _dbcontext.TeamPoz.FirstOrDefault(t => t.Id == selectedUserId);
+
+        if (selectedUser == null)
+        {
+            return;
+        }
+
+        var goalsSet = new GoalsMatch
+            {
+                PlayerId = selectedUser.Id,
+                FirstName = selectedUser.FirstName,
+                LastName = selectedUser.LastName,
+                Goals = goalsCount ?? 0,
+                TeamId = selectedUser.TeamId,
+                MatchId = matchIdQueryInt
+            };
+
+        try
+        {
+            await _dbcontext.GoalsMatch.AddAsync(goalsSet);
+            await _dbcontext.SaveChangesAsync();
+            await GetGoals();
+            StateHasChanged();
+        }
+        catch (Exception ex) { }
+    }
+
+    public async Task GetGoals()
+    {
+        if (hostTeam != null && hostTeam.OwnerId == user.Id)
+        {
+            goals = await _dbcontext.GoalsMatch.Where(g => g.MatchId == matchIdQueryInt && g.TeamId == hostTeam.Id).ToListAsync();
+        }
+        else if (guestTeam != null && guestTeam.OwnerId == user.Id)
+        {
+            goals = await _dbcontext.GoalsMatch.Where(g => g.MatchId == matchIdQueryInt && g.TeamId == guestTeam.Id).ToListAsync();
+        }
+    }
+
+    public async Task DeleteGoals(GoalsMatch goalsDel)
+    {
+        try
+        {
+            _dbcontext.Remove(goalsDel);
+            await _dbcontext.SaveChangesAsync();
+            await GetGoals();
+            StateHasChanged();
+        }
+        catch(Exception ex) { }
+    }
+
+    public async Task AcceptScore()
+    {
+        matchPoz = await _dbcontext.matchPoz.FirstOrDefaultAsync(m => m.MatchId == matchIdQueryInt);
+
+        if (matchPoz is null)
+        {
+
+            if (hostTeam != null && hostTeam.OwnerId == user.Id)
+            {
+                score = new MatchPoz
+                {
+                    MatchId = matchIdQueryInt,
+                    Score1Value = goals.Sum(g => g.Goals) ?? 0,
+                    Score2Value = null
+                };
+            }
+            else if (guestTeam != null && guestTeam.OwnerId == user.Id)
+            {
+                score = new MatchPoz
+                {
+                    MatchId = matchIdQueryInt,
+                    Score1Value = null,
+                    Score2Value = goals.Sum(g => g.Goals) ?? 0
+                };
+            }
+
+            await _dbcontext.matchPoz.AddAsync(score);
+            await _dbcontext.SaveChangesAsync();
+        }
+        else
+        {
+            if (matchPoz.Score1Value is null)
+            {
+                matchPoz.Score1Value = goals.Sum(g => g.Goals) ?? 0;
+            }
+            else if (matchPoz.Score2Value is null)
+            {
+                matchPoz.Score2Value = goals.Sum(g => g.Goals) ?? 0;
+            }
+            await _dbcontext.SaveChangesAsync();
+        }
+
+        successMessage = "Zapisano wynik";
+    }
+}
