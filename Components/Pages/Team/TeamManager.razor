@@ -1,11 +1,14 @@
 ﻿@page "/druzyna-zarzadzaj"
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using ULO.Models.Entities
 @using ULO.UI.Models
 @using ULO.UI.Models.Entities
 @inject ULODbContext _dbcontext
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Prezes")]
+
 
 <style>
     .container-TeamManagerForm {
@@ -52,6 +55,44 @@
         margin-top: 10px;
         cursor: pointer;
     }
+
+    .modal-dialog {
+        max-width: 500px;
+        margin: 100px auto;
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        position: relative;
+        z-index: 1060;
+        pointer-events: auto;
+    }
+
+    .modal {
+        display: block;
+        background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1050; /* Wysoki z-index dla modalu */
+        pointer-events: auto;
+    }
+
+    .btn-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    body.modal-open {
+        overflow: hidden; /* Blokuje przewijanie */
+    }
+
 </style>
 
 <div class="container">
@@ -68,9 +109,6 @@
 
                     <InputText @bind-Value="teamPozAdd.LastName" placeholder="LastName" />
                     <ValidationMessage For="() =>teamPozAdd.LastName" />
-
-                    <InputText @bind-Value="teamPozAdd.Position" placeholder="Position" />
-                    <ValidationMessage For="() =>teamPozAdd.Position" />
 
                         <span>Numer zawodnika:</span>
                     <InputNumber @bind-Value="teamPozAdd.Number" min ="1" max = "99"></InputNumber>
@@ -93,8 +131,7 @@
                     <th style="width: 10%;">Numer</th>
                     <th>Imię</th>
                     <th>Nazwisko</th>
-                    <th>Pozycja</th>
-                    <th style="width: 35%;">Przypisanie zawodnika do konta</th>
+                    <th style="width: 35%;">Opcje</th>
                 </tr>
             </thead>
             @if (teamPoz != null && teamPoz.Count > 0)
@@ -106,9 +143,8 @@
                             <td>@player.Number</td>
                             <td>@player.FirstName</td>
                             <td>@player.LastName</td>
-                            <td>@player.Position</td>
                             <td>
-                                @if(player.UserId is null)
+                                @* @if(player.UserId is null)
                                 {
                                     <span>Id użytkownika:</span>
                                     <InputNumber @bind-Value="AssignNumber" min="1" style="width: 15%;"></InputNumber>
@@ -119,7 +155,35 @@
                                 else
                                 {
                                     <span>Id użytkownika: @player.UserId</span>
+                                } *@
+                                <button class="btn btn-primary btn-sm me-2" @onclick="() => OpenEditModal(player.Id)">
+                                    Edytuj
+                                </button>
+
+                                @if (isEditModalVisible)
+                                {
+                                    <div class="modal" style="display: block;">
+                                        <div class="modal-dialog">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edytuj zawodnika</h5>
+                                                <button class="btn-close" @onclick="CloseEditModal">&times;</button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <EditPlayer PlayerId="@selectedPlayerId" OnModalClose="HandleModalClose" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        document.body.classList.add("modal-open");
+                                    </script>
                                 }
+                                else
+                                {
+                                    <script>
+                                        document.body.classList.remove("modal-open");
+                                    </script>
+                                }
+
                             </td>
                         </tr>
                     </tbody>
@@ -154,6 +218,9 @@
 
     public int? AssignNumber { get; set; }
 
+    private bool isEditModalVisible = false;
+    private int selectedPlayerId;
+
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await AuthenticationStateTask;
@@ -180,7 +247,7 @@
             FirstName = teamPozAdd.FirstName,
             LastName = teamPozAdd.LastName,
             TeamId = teamNag.Id,
-            Position = teamPozAdd.Position,
+            Position = null,
             Number = teamPozAdd.Number,
             Status = 'A',
             Created = DateTime.Now,
@@ -199,27 +266,44 @@
 
     }
 
-    private async Task AssignPlayer(int? userId, int teamPozId, string firstName, string lastName)
-    {
-        TeamPoz? player = await _dbcontext.TeamPoz.FirstOrDefaultAsync(p => p.Id == teamPozId);
-        User? user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    // private async Task AssignPlayer(int? userId, int teamPozId, string firstName, string lastName)
+    // {
+    //     TeamPoz? player = await _dbcontext.TeamPoz.FirstOrDefaultAsync(p => p.Id == teamPozId);
+    //     User? user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-        if(await _dbcontext.TeamPoz.FirstOrDefaultAsync(u => u.UserId == userId) is null)
-        {
-            if (player.FirstName.ToLower() == user.FirstName.ToLower() && player.LastName.ToLower() == user.LastName.ToLower())
-            {
-                player.UserId = userId;
-                player.LastUpdated = DateTime.Now;
-                try
-                {
-                    await _dbcontext.SaveChangesAsync();
-                    await LoadTeamsAsync(user.Id);
-                }
-                catch (Exception ex)
-                {
-                    
-                }
-            }
-        }
+    //     if(await _dbcontext.TeamPoz.FirstOrDefaultAsync(u => u.UserId == userId) is null)
+    //     {
+    //         if (player.FirstName.ToLower() == user.FirstName.ToLower() && player.LastName.ToLower() == user.LastName.ToLower())
+    //         {
+    //             player.UserId = userId;
+    //             player.LastUpdated = DateTime.Now;
+    //             try
+    //             {
+    //                 await _dbcontext.SaveChangesAsync();
+    //                 await LoadTeamsAsync(user.Id);
+    //             }
+    //             catch (Exception ex)
+    //             {
+
+    //             }
+    //         }
+    //     }
+    // }
+
+    private void OpenEditModal(int playerId)
+    {
+        selectedPlayerId = playerId;
+        isEditModalVisible = true;
+    }
+
+    private void CloseEditModal()
+    {
+        isEditModalVisible = false;
+    }
+    private async Task HandleModalClose(bool isVisible)
+    {
+        isEditModalVisible = isVisible;
+        StateHasChanged();
+        await LoadTeamsAsync(user.Id);
     }
 }

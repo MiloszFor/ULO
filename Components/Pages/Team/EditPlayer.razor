@@ -1,0 +1,114 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using ULO.UI.Models.Entities
+@inject ULODbContext _dbcontext
+
+<link rel="stylesheet" href="css/style.css" />
+
+<EditForm Model="@editPlayer" OnValidSubmit="UpdatePlayer">
+    <DataAnnotationsValidator />
+
+    @if (!string.IsNullOrEmpty(editPlayer.Avatar))
+    {
+        <img src="@editPlayer.Avatar" alt="Logo" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+    }
+    else
+    {
+        <img src="https://via.placeholder.com/100" class="rounded-circle" style="width: 150px; height: 150px; margin-bottom: 15px;" />
+    }
+
+    <InputText @bind-Value="editPlayer.FirstName" placeholder="Imię" />
+    <ValidationMessage For="() => editPlayer.FirstName" />
+
+    <InputText @bind-Value="editPlayer.LastName" placeholder="Nazwisko" />
+    <ValidationMessage For="() => editPlayer.LastName" />
+
+    <span>Numer zawodnika:</span>
+    <InputNumber @bind-Value="editPlayer.Number" min="1" max="99" />
+    <ValidationMessage For="() => editPlayer.Number" />
+
+    <span>Zdjęcie:</span>
+    <InputFile OnChange="HandleFileSelected" />
+    @if (!string.IsNullOrEmpty(playerPhoto))
+    {
+        <img src="@playerPhoto" alt="Zdjęcie zawodnika" style="max-width: 100px; margin-top: 10px;" />
+    }
+
+    <button type="submit" class="btn btn-success mt-3">Zapisz</button>
+    <button type="button" class="btn btn-danger mt-3" @onclick="RemovePlayer">Usuń z drużyny</button>
+</EditForm>
+
+@code {
+    [Parameter] public int PlayerId { get; set; }
+    [Parameter] public EventCallback<bool> OnModalClose { get; set; }
+
+    public string? AvatarPath { get; set; }
+
+    private TeamPoz? editPlayer;
+    private string? playerPhoto;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        editPlayer = await _dbcontext.TeamPoz.FindAsync(PlayerId);
+    }
+
+    private async Task UpdatePlayer()
+    {
+        if (editPlayer != null)
+        {
+            editPlayer.LastUpdated = DateTime.Now;
+            await _dbcontext.SaveChangesAsync();
+            await OnModalClose.InvokeAsync(false);
+        }
+    }
+
+    private async Task RemovePlayer()
+    {
+        if (editPlayer != null)
+        {
+            _dbcontext.TeamPoz.Remove(editPlayer);
+            await _dbcontext.SaveChangesAsync();
+            await OnModalClose.InvokeAsync(false);
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var avatarsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+
+            if (!Directory.Exists(avatarsFolder))
+            {
+                Directory.CreateDirectory(avatarsFolder);
+            }
+
+            var sanitizedFileName = string.Concat(file.Name.Split(Path.GetInvalidFileNameChars()));
+            var uniqueFileName = $"{Guid.NewGuid()}_{sanitizedFileName}";
+            var filePath = Path.Combine(avatarsFolder, uniqueFileName);
+
+            try
+            {
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(fileStream);
+                }
+
+                if (!string.IsNullOrEmpty(editPlayer.Avatar))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", editPlayer.Avatar.TrimStart('/'));
+                    if (File.Exists(oldFilePath))
+                    {
+                        File.Delete(oldFilePath);
+                    }
+                }
+
+                editPlayer.Avatar = $"/avatars/{uniqueFileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving file: {ex.Message}");
+            }
+        }
+    }
+}
