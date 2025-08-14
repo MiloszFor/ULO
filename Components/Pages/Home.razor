@@ -81,7 +81,7 @@
     <h5 class="alert-danger" style="text-align:center; margin-top: 50px;">Strona jest w fazie rozwoju i występuje w wersji wczesnego dostępu!</h5>
     <div class="row">
         <h3 style="text-align:center;">Ambasadorzy</h3>
-        @if (ambasadorList is not null)
+        @* @if (ambasadorList is not null)
         {
             @foreach(var item in ambasadorList)
             {
@@ -90,7 +90,7 @@
                     <h3 style="text-align:center;">@item.TeamName</h3>
                 </div>
             }
-        }
+        } *@
         
     </div>
 </div>
@@ -125,12 +125,12 @@
 @code {
     public List<FutureMatchDashboard>? MatchDashboard { get; set; }
 
-    public List<ULO.UI.Models.Entities.Team> ambasadorList { get; set; }
+    //public List<ULO.UI.Models.Entities.Team> ambasadorList { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await GetMatch();
-        ambasadorList = _dbcontext.Team.Where(t => t.Id == 51).ToList();
+        //ambasadorList = _dbcontext.Team.Where(t => t.Id == 51).ToList();
     }
 
     public async Task GetMatch()

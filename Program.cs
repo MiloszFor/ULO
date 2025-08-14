@@ -6,16 +6,15 @@ using ULO.UI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//  Rejestracja komponentów Razor i Blazor
 builder.Services.AddRazorComponents()
-.AddInteractiveServerComponents();
+    .AddInteractiveServerComponents();
 
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
-builder.Services.AddAntiforgery();
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options => { options.DetailedErrors = true; });
 
-
-
+//  Uwierzytelnianie i autoryzacja
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -25,37 +24,40 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Error";
     });
 
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddDbContext<ULODbContext>
-                (options => options.UseSqlServer(builder.Configuration.GetConnectionString("ULODbConnection")));
-
 builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
 
+//  Rejestracja kontekstu bazy danych
+builder.Services.AddDbContext<ULODbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ULODbConnection")));
+
+builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+//  Middleware
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage(); //  dodane tylko w Dev
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-app.UseAntiforgery();
+
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
 app.UseAntiforgery();
 
+//  Mapowanie komponentów Blazor
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-app.UseStaticFiles();
-
 
 app.Run();

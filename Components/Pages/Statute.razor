@@ -19,14 +19,14 @@
 
 <div class="container">
     <h1 class="text-center" style="font-weight: bold;">Regulamin</h1>
-    @if (statute == null)
+    @* @if (statute == null)
     {
         <p>Brak regulaminu</p>
     }
     else
     {
         <p>@((MarkupString)statute.Rules)</p>
-    }
+    } *@
 </div>
 <AuthorizeView Roles="Admin">
     <button style="margin-top: 1vh;" class="btn btn-success btn-lg active">
@@ -34,21 +34,23 @@
     </button>
 </AuthorizeView>
 @code {
-    public ULO.UI.Models.Entities.Statute? statute { get; set; }
+    // public ULO.UI.Models.Entities.Statute? statute { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            statute = await _dbcontext.Statute
-                .OrderByDescending(s => s.Id)
-                .FirstOrDefaultAsync();
-        }
-        catch (Exception ex) { }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     try
+    //     {
+    //         statute = await _dbcontext.Statute
+    //             .OrderByDescending(s => s.Id)
+    //             .FirstOrDefaultAsync();
+    //     }
+    //     catch (Exception ex) { }
 
-        if (statute.Rules is not null)
-        {
-            statute.Rules = statute.Rules.Replace("\n", "<br />");
-        }
-    }
+    //     if (statute.Rules is null) statute.Rules = " ";
+
+    //     else
+    //     {
+    //         statute.Rules = statute.Rules.Replace("\n", "<br />");
+    //     }
+    // }
 }
