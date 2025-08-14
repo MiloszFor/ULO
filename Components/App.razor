@@ -1,23 +1,16 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using ULO.UI.Components.Layout
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="ULO.UI.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-
-    <HeadOutlet />
-</head>
-
-<body>
-    <Routes />
-    <script src="_framework/blazor.web.js"></script>
-</body>
-
-</html>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Przepraszamy, pod tym adresem nic nie znaleziono.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

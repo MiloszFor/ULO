@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Migrations\" />
     <Folder Include="wwwroot\avatars\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ULO.Shared\ULO.Shared.csproj" />
   </ItemGroup>
 
 </Project>

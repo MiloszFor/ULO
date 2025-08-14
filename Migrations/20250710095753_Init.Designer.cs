@@ -12,8 +12,8 @@ using ULO;
 namespace ULO.UI.Migrations
 {
     [DbContext(typeof(ULODbContext))]
-    [Migration("20241202135104_Init18")]
-    partial class Init18
+    [Migration("20250710095753_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -116,6 +116,25 @@ namespace ULO.UI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GoalsMatch");
+                });
+
+            modelBuilder.Entity("ULO.UI.Models.Entities.LogLogin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LogLogin");
                 });
 
             modelBuilder.Entity("ULO.UI.Models.Entities.Match", b =>
